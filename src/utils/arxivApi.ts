@@ -1,7 +1,7 @@
 import { ArxivQueryParams, ArxivResponse, ArxivPaper } from "../data/types";
 import { XMLParser } from "fast-xml-parser";
 
-const BASE_URL = "http://export.arxiv.org/api/query";
+const BASE_URL = "https://export.arxiv.org/api/query";
 const INITIAL_BATCH_SIZE = 50;
 
 /**
@@ -131,7 +131,7 @@ export async function fetchArxivPapers(
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const response = await fetch(
-      `http://export.arxiv.org/api/query?search_query=cat:cs.AI&start=${start}&max_results=${batchSize}&sortBy=submittedDate&sortOrder=descending`
+      `https://export.arxiv.org/api/query?search_query=cat:cs.AI&start=${start}&max_results=${batchSize}&sortBy=submittedDate&sortOrder=descending`
     );
 
     if (!response.ok) {
