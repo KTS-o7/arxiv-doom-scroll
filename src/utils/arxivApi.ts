@@ -2,7 +2,7 @@ import { ArxivQueryParams, ArxivResponse, ArxivPaper } from "../data/types";
 import { XMLParser } from "fast-xml-parser";
 
 const BASE_URL = "https://export.arxiv.org/api/query";
-const INITIAL_BATCH_SIZE = 50;
+const INITIAL_BATCH_SIZE = 500;
 
 /**
  * Converts XML response to our ArxivResponse type
