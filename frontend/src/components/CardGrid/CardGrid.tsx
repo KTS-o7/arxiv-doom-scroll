@@ -4,30 +4,80 @@ import Card from "../Card/Card";
 import { GridContainer, LoadingText, CardWrapper } from "./CardGrid.styles";
 import { fetchArxivPapers } from "../../utils/arxivApi";
 
-const CardGrid = () => {
+const CardGrid: React.FC = () => {
   const [papers, setPapers] = useState<ArxivPaper[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
-  const loadPapers = useCallback(async () => {
-    if (isLoading) return;
-    setIsLoading(true);
-    setError(null);
+  const loadMorePapers = useCallback(async () => {
+    //console.log('loadMorePapers called, loading:', loading, 'hasMore:', hasMore);
+    if (loading || !hasMore) {
+      //console.log('Skipping load due to loading:', loading, 'or hasMore:', hasMore);
+      return;
+    }
 
     try {
-      const newPapers = await fetchArxivPapers(0, true);
+      setLoading(true);
+      //console.log('CardGrid: Fetching papers for page:', page);
+
+      const { papers: newPapers, totalResults } = await fetchArxivPapers(page);
+      //console.log('CardGrid: Received papers:', newPapers.length, 'total:', totalResults);
+      
       if (newPapers.length === 0) {
-        throw new Error("No papers received from API");
+        //console.log('CardGrid: No more papers available');
+        setHasMore(false);
+        return;
       }
-      setPapers(newPapers);
+
+      setPapers(prev => {
+        const updatedPapers = [...prev, ...newPapers];
+        //console.log('CardGrid: Total papers after update:', updatedPapers.length);
+        return updatedPapers;
+      });
+      
+      setHasMore(papers.length + newPapers.length < totalResults);
+      setPage(prev => prev + 1);
     } catch (err) {
+      //console.error('CardGrid: Error loading papers:', err);
       setError(err instanceof Error ? err.message : "Failed to load papers");
+      setHasMore(false);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [isLoading]);
+  }, [loading, hasMore, page, papers.length]);
+
+  // Initial load effect
+  useEffect(() => {
+    const initializeAndLoad = async () => {
+      //console.log('CardGrid: Initializing component');
+      // Reset states
+      setPapers([]);
+      setPage(0);
+      setHasMore(true);
+      setError(null);
+      setLoading(false);
+      
+      // Load initial papers
+      await loadMorePapers();
+    };
+
+    initializeAndLoad();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load more papers when approaching the end
+  useEffect(() => {
+    if (papers.length === 0) return;
+    
+    const loadThreshold = 5;
+    if (currentIndex >= papers.length - loadThreshold && hasMore && !loading) {
+      //console.log('Triggering load more papers'); // Debug log
+      loadMorePapers();
+    }
+  }, [currentIndex, papers.length, hasMore, loading, loadMorePapers]);
 
   const handleWheel = useCallback(
     (e: WheelEvent) => {
@@ -75,12 +125,6 @@ const CardGrid = () => {
     setTouchStart(null);
   }, []);
 
-  useEffect(() => {
-    if (papers.length === 0) {
-      loadPapers();
-    }
-  }, [papers.length, loadPapers]);
-
   // Desktop scroll handling
   useEffect(() => {
     window.addEventListener("wheel", handleWheel, { passive: false });
@@ -106,14 +150,20 @@ const CardGrid = () => {
 
   return (
     <GridContainer>
-      {isLoading ? (
+      {loading && papers.length === 0 ? (
         <LoadingText>Loading papers...</LoadingText>
-      ) : (
-        papers[currentIndex] && (
+      ) : papers.length > 0 ? (
+        <>
           <CardWrapper key={papers[currentIndex].id}>
             <Card paper={papers[currentIndex]} />
           </CardWrapper>
-        )
+          {loading && <LoadingText>Loading more papers...</LoadingText>}
+          {!hasMore && currentIndex === papers.length - 1 && (
+            <LoadingText>No more papers to load</LoadingText>
+          )}
+        </>
+      ) : (
+        <LoadingText>No papers available</LoadingText>
       )}
     </GridContainer>
   );

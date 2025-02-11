@@ -35,11 +35,15 @@ const GlobalStyles = createGlobalStyle`
 `;
 
 function App() {
+
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles />
       <Navbar />
-      <CardGrid />
+      <div>
+        <h1>Debug: CardGrid should appear below</h1>
+        <CardGrid />
+      </div>
     </ThemeProvider>
   );
 }

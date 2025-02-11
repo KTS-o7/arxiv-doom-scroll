@@ -1,188 +1,132 @@
-import { ArxivQueryParams, ArxivResponse, ArxivPaper } from "../data/types";
-import { XMLParser } from "fast-xml-parser";
+import { ArxivQueryParams, ArxivServerResponse, ArxivPaper } from "../data/types";
 
-const BASE_URL = "https://export.arxiv.org/api/query";
-const INITIAL_BATCH_SIZE = 500;
-
-/**
- * Converts XML response to our ArxivResponse type
- */
-const parseArxivResponse = (xmlData: string): ArxivResponse => {
-  const parser = new XMLParser({
-    ignoreAttributes: false,
-    attributeNamePrefix: "",
-    textNodeName: "text",
-    isArray: (name) => ["entry", "author", "category", "link"].includes(name),
-  });
-
-  const parsed = parser.parse(xmlData);
-  const feed = parsed.feed;
-
-  return {
-    feed: {
-      title: feed.title.text || feed.title,
-      id: feed.id,
-      updated: feed.updated,
-      opensearch: {
-        totalResults: parseInt(feed["opensearch:totalResults"]),
-        startIndex: parseInt(feed["opensearch:startIndex"]),
-        itemsPerPage: parseInt(feed["opensearch:itemsPerPage"]),
-      },
-      entries: feed.entry.map((entry: any) => ({
-        id: entry.id,
-        title: entry.title.text || entry.title,
-        summary: entry.summary.text || entry.summary,
-        published: entry.published,
-        updated: entry.updated,
-        authors: entry.author.map((author: any) => ({
-          name: author.name.text || author.name,
-          affiliation: author["arxiv:affiliation"],
-        })),
-        categories: entry.category.map((category: any) => ({
-          term: category.term,
-          scheme: category.scheme,
-        })),
-        primaryCategory: {
-          term: entry["arxiv:primary_category"].term,
-          scheme: entry["arxiv:primary_category"].scheme,
-        },
-        links: entry.link.map((link: any) => ({
-          href: link.href,
-          rel: link.rel,
-          type: link.type,
-          title: link.title,
-        })),
-        comment: entry["arxiv:comment"],
-        journalRef: entry["arxiv:journal_ref"],
-        doi: entry["arxiv:doi"],
-      })),
-    },
-  };
-};
+const BASE_URL = "http://localhost:5000/api";
+const BATCH_SIZE = 50;
 
 /**
- * Constructs the query URL from the provided parameters
- */
-const buildQueryUrl = (params: ArxivQueryParams): string => {
-  const queryParams = new URLSearchParams();
-
-  if (params.search_query) queryParams.set("search_query", params.search_query);
-  if (params.id_list) queryParams.set("id_list", params.id_list);
-  if (params.start !== undefined)
-    queryParams.set("start", params.start.toString());
-  if (params.max_results !== undefined)
-    queryParams.set("max_results", params.max_results.toString());
-  if (params.sortBy) queryParams.set("sortBy", params.sortBy);
-  if (params.sortOrder) queryParams.set("sortOrder", params.sortOrder);
-
-  return `${BASE_URL}?${queryParams.toString()}`;
-};
-
-/**
- * Fetches arXiv data based on the provided query parameters
- * @param params Query parameters for the arXiv API
- * @returns Promise that resolves to the parsed ArxivResponse
- * @throws Error if the request fails or the response is invalid
+ * Fetches papers from the local server
  */
 export const fetchArxivData = async (
   params: ArxivQueryParams
-): Promise<ArxivResponse> => {
+): Promise<ArxivServerResponse> => {
   try {
-    const url = buildQueryUrl(params);
+    const queryParams = new URLSearchParams();
 
-    // Add a delay to respect arXiv's rate limiting
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    if (params.search_query) queryParams.set('search_query', params.search_query);
+    if (params.id_list) queryParams.set('id_list', params.id_list);
+    if (params.start !== undefined) queryParams.set('start', params.start.toString());
+    if (params.max_results !== undefined) queryParams.set('max_results', params.max_results.toString());
+    if (params.sortBy) queryParams.set('sortBy', params.sortBy);
+    if (params.sortOrder) queryParams.set('sortOrder', params.sortOrder);
 
-    const response = await fetch(url);
+    const url = `${BASE_URL}/papers?${queryParams.toString()}`;
+    //console.log('fetchArxivData: Attempting to fetch from URL:', url);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include'
+    });
+
+    //console.log('fetchArxivData: Response status:', response.status);
 
     if (!response.ok) {
-      throw new Error(`ArXiv API request failed: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Server error response:', errorText);
+      throw new Error(`Server request failed: ${response.statusText} - ${errorText}`);
     }
 
-    const xmlData = await response.text();
-    return parseArxivResponse(xmlData);
+    const data = await response.json();
+    //console.log('fetchArxivData: Received data:', data);
+    return data;
+  } catch (error) {
+    console.error('fetchArxivData: Error details:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches papers with pagination
+ * @param page - The page number (0-based)
+ * @returns Promise containing the papers and total count
+ */
+export async function fetchArxivPapers(
+  page: number
+): Promise<{ papers: ArxivPaper[]; totalResults: number }> {
+  try {
+    //console.log('fetchArxivPapers: Starting fetch for page:', page);
+    
+    const response = await fetchArxivData({
+      search_query: 'cat:cs.AI',
+      start: page * 50,
+      max_results: 50,
+      sortBy: 'submittedDate',
+      sortOrder: 'descending'
+    });
+
+    //console.log('fetchArxivPapers: Raw response:', response);
+
+    if (!response.papers || !Array.isArray(response.papers)) {
+      console.error('fetchArxivPapers: Invalid response format:', response);
+      throw new Error('Invalid response format from server');
+    }
+
+    // Transform the server response to match ArxivPaper interface
+    const papers: ArxivPaper[] = response.papers.map(paper => ({
+      id: paper.id,
+      title: paper.title,
+      summary: paper.summary,
+      authors: paper.authors.map(author => author.name),
+      publishedDate: paper.published,
+      link: paper.links.find(link => link.title === 'pdf')?.href || paper.id
+    }));
+
+    //console.log('fetchArxivPapers: Transformed papers:', papers.length);
+
+    return {
+      papers,
+      totalResults: response.metadata.total_results
+    };
+  } catch (error) {
+    console.error("fetchArxivPapers: Error:", error);
+    throw error;
+  }
+}
+
+/**
+ * Fetches a single paper by ID
+ */
+export const fetchPaperById = async (paperId: string): Promise<ArxivPaper> => {
+  try {
+    const response = await fetch(`${BASE_URL}/paper/${paperId}`);
+
+    if (!response.ok) {
+      throw new Error(`Server request failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
   } catch (error) {
     throw new Error(
-      `Failed to fetch arXiv data: ${
+      `Failed to fetch paper: ${
         error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
 };
 
-/**
- * Example usage:
- *
- * const response = await fetchArxivData({
- *   search_query: 'cat:cs.AI',
- *   max_results: 10
- * });
- */
-
-export async function fetchArxivPapers(
-  page: number,
-  isInitialLoad = false
-): Promise<ArxivPaper[]> {
-  const batchSize = isInitialLoad ? INITIAL_BATCH_SIZE : 10;
-  const start = page * batchSize;
-
+// Add a test function
+export const testApiConnection = async () => {
   try {
-    // Add a small delay to respect arXiv's rate limiting
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const response = await fetch(
-      `https://export.arxiv.org/api/query?search_query=cat:cs.AI&start=${start}&max_results=${batchSize}&sortBy=submittedDate&sortOrder=descending`
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const text = await response.text();
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(text, "text/xml");
-
-    // Check for parsing errors
-    const parserError = xmlDoc.querySelector("parsererror");
-    if (parserError) {
-      console.error("XML parsing error:", parserError);
-      return [];
-    }
-
-    const entries = xmlDoc.getElementsByTagName("entry");
-    console.log(`Fetched ${entries.length} papers`); // Debug log
-
-    return Array.from(entries).map((entry): ArxivPaper => {
-      const authors = Array.from(entry.getElementsByTagName("author")).map(
-        (author) => {
-          const nameElement = author.getElementsByTagName("name")[0];
-          return nameElement ? nameElement.textContent || "" : "";
-        }
-      );
-
-      const getElementText = (element: Element, tagName: string): string => {
-        const elem = element.getElementsByTagName(tagName)[0];
-        return elem ? elem.textContent?.replace(/\s+/g, " ").trim() || "" : "";
-      };
-
-      // Get the PDF link
-      const links = Array.from(entry.getElementsByTagName("link"));
-      const pdfLink =
-        links
-          .find((link) => link.getAttribute("title") === "pdf")
-          ?.getAttribute("href") || "";
-
-      return {
-        id: getElementText(entry, "id"),
-        title: getElementText(entry, "title"),
-        summary: getElementText(entry, "summary"),
-        authors,
-        publishedDate: getElementText(entry, "published"),
-        link: pdfLink || getElementText(entry, "id"), // Use PDF link if available
-      };
-    });
+    const response = await fetch(`${BASE_URL}/test`);
+    const data = await response.json();
+    console.log('API test response:', data);
+    return data;
   } catch (error) {
-    console.error("Error fetching arXiv papers:", error);
-    throw error; // Propagate error to show in UI
+    console.error('API test error:', error);
+    throw error;
   }
-}
+};
