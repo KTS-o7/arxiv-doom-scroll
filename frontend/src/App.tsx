@@ -1,24 +1,8 @@
+import React from 'react';
 import { ThemeProvider, createGlobalStyle } from "styled-components";
-import { Theme } from "./data/types";
+import { theme } from './styles/theme';
 import Navbar from "./components/Navbar/Navbar";
 import CardGrid from "./components/CardGrid/CardGrid";
-
-const theme: Theme = {
-  background: "#121212",
-  border: "#A6ABF4",
-  primary: "#E2E2E2",
-  secondary: "#A3BABF",
-  breakpoints: {
-    mobile: "320px",
-    tablet: "768px",
-    desktop: "1024px",
-  },
-  spacing: {
-    small: "8px",
-    medium: "16px",
-    large: "24px",
-  },
-};
 
 const GlobalStyles = createGlobalStyle`
   * {
@@ -28,24 +12,20 @@ const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    background-color: ${({ theme }) => theme.background};
-    color: ${({ theme }) => theme.primary};
+    background-color: ${({ theme }) => theme.colors.background};
+    color: ${({ theme }) => theme.colors.text};
     font-family: 'Inter', sans-serif;
   }
 `;
 
-function App() {
-
+const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles />
       <Navbar />
-      <div>
-        <h1>Debug: CardGrid should appear below</h1>
         <CardGrid />
-      </div>
     </ThemeProvider>
   );
-}
+};
 
 export default App;

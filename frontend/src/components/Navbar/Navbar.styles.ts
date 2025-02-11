@@ -34,5 +34,5 @@ export const DoomName = styled.h3`
 `;
 
 export const ColorLink = styled.a`
-  color: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme.colors.primary};
 `;

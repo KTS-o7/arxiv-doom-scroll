@@ -25,6 +25,20 @@ export const GridContainer = styled.div`
   }
 `;
 
+export const StyledCard = styled.div`
+  background-color: ${({ theme }) => theme.colors.background};
+  border-radius: ${({ theme }) => theme.borderRadius};
+  box-shadow: ${({ theme }) => theme.shadows.medium};
+  padding: ${({ theme }) => theme.spacing.medium};
+  transition: transform 0.2s ease-in-out;
+  cursor: pointer;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+`;
+
 export const CardWrapper = styled.div`
   width: 100%;
   max-width: 800px;
@@ -37,6 +51,6 @@ export const CardWrapper = styled.div`
 
 export const LoadingText = styled.p`
   text-align: center;
-  color: ${({ theme }) => theme.secondary};
+  color: ${({ theme }) => theme.colors.secondary};
   padding: ${({ theme }) => theme.spacing.medium};
 `;
