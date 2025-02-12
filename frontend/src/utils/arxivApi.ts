@@ -1,7 +1,6 @@
 import { ArxivQueryParams, ArxivServerResponse, ArxivPaper } from "../data/types";
 
 const BASE_URL = "http://localhost:5000/api";
-const BATCH_SIZE = 50;
 
 /**
  * Fetches papers from the local server

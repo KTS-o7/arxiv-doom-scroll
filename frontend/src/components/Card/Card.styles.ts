@@ -36,8 +36,6 @@ export const Summary = styled.p`
   line-height: 1.5;
   margin: ${({ theme }) => theme.spacing.small} 0;
   display: -webkit-box;
-  -webkit-line-clamp: 15;
-  -webkit-box-orient: vertical;
   overflow: hidden;
 `;
 

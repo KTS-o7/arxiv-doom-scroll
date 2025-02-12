@@ -84,7 +84,7 @@ class ArxivService:
 
     async def get_session(self):
         if self.session is None:
-            self.session = aiohttp.ClientSession()
+            self.session = aiohttp.ClientSession(trust_env=True)
         return self.session
 
     async def close(self):

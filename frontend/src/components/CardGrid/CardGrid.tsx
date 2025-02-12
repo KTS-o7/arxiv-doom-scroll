@@ -15,10 +15,6 @@ const CardGrid: React.FC = () => {
 
   const loadMorePapers = useCallback(async () => {
     //console.log('loadMorePapers called, loading:', loading, 'hasMore:', hasMore);
-    if (loading || !hasMore) {
-      //console.log('Skipping load due to loading:', loading, 'or hasMore:', hasMore);
-      return;
-    }
 
     try {
       setLoading(true);
@@ -48,7 +44,7 @@ const CardGrid: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [loading, hasMore, page, papers.length]);
+  }, [page, papers.length]);
 
   // Initial load effect
   useEffect(() => {
@@ -83,12 +79,18 @@ const CardGrid: React.FC = () => {
     (e: WheelEvent) => {
       if (papers.length === 0) return;
       e.preventDefault();
-
+      
+      const scrollThreshold = 18;
+      const currentScrollDist = Math.abs(e.deltaY);
+      //console.log(' Before trigger Scroll distance:', currentScrollDist);
+      if(currentScrollDist >= scrollThreshold) {
+        //console.log('Scroll distance:', currentScrollDist);
       if (e.deltaY > 0) {
         setCurrentIndex((prev) => Math.min(prev + 1, papers.length - 1));
       } else {
         setCurrentIndex((prev) => Math.max(prev - 1, 0));
       }
+    }
     },
     [papers.length]
   );
@@ -125,6 +127,26 @@ const CardGrid: React.FC = () => {
     setTouchStart(null);
   }, []);
 
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (papers.length === 0) return;
+
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'ArrowLeft':
+          e.preventDefault();
+          setCurrentIndex((prev) => Math.max(prev - 1, 0));
+          break;
+        case 'ArrowDown':
+        case 'ArrowRight':
+          e.preventDefault();
+          setCurrentIndex((prev) => Math.min(prev + 1, papers.length - 1));
+          break;
+      }
+    },
+    [papers.length]
+);
+
   // Desktop scroll handling
   useEffect(() => {
     window.addEventListener("wheel", handleWheel, { passive: false });
@@ -143,6 +165,12 @@ const CardGrid: React.FC = () => {
       window.removeEventListener("touchend", handleTouchEnd);
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+
+  //  new effect for keyboard handling
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   if (error) {
     return <LoadingText>Error: {error}</LoadingText>;

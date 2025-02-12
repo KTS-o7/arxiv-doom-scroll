@@ -6,7 +6,7 @@ import asyncio
 app = Flask(__name__)
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["http://localhost:3000"],  # Your React app's URL
+        "origins": "*",  # Your React app's URL
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
