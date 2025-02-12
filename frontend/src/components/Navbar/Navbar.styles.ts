@@ -1,8 +1,8 @@
 import styled from "styled-components";
 
 export const StyledNav = styled.nav`
-  background-color: ${({ theme }) => theme.background};
-  border-bottom: 1px solid ${({ theme }) => theme.border};
+  background-color: ${({ theme }) => theme.colors.background};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   padding: ${({ theme }) => theme.spacing.medium};
   position: sticky;
   top: 0;
@@ -10,13 +10,13 @@ export const StyledNav = styled.nav`
 `;
 
 export const Title = styled.h1`
-  color: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme.colors.primary};
   font-size: 1.5rem;
   text-align: center;
 `;
 
 export const Acknowledgement = styled.h3`
-  color: ${({ theme }) => theme.textSecondary};
+  color: ${({ theme }) => theme.colors.textSecondary};
   font-size: 0.85rem;
   font-weight: 500;
   text-align: center;
@@ -25,7 +25,7 @@ export const Acknowledgement = styled.h3`
 `;
 
 export const DoomName = styled.h3`
-  color: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme.colors.primary};
   font-size: 0.85rem;
   font-weight: 500;
   text-align: center;
