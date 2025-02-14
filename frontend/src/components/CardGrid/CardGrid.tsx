@@ -3,6 +3,7 @@ import { ArxivPaper } from "../../data/types";
 import Card from "../Card/Card";
 import { GridContainer, LoadingText, CardWrapper } from "./CardGrid.styles";
 import { fetchArxivPapers } from "../../utils/arxivApi";
+import { useIsBigCardOpen } from '../../hooks/useIsBigCardOpen';
 
 const CardGrid: React.FC = () => {
   const [papers, setPapers] = useState<ArxivPaper[]>([]);
@@ -12,6 +13,7 @@ const CardGrid: React.FC = () => {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const isBigCardOpen = useIsBigCardOpen();
 
   const loadMorePapers = useCallback(async () => {
     //console.log('loadMorePapers called, loading:', loading, 'hasMore:', hasMore);
@@ -96,31 +98,31 @@ const CardGrid: React.FC = () => {
   );
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
+    if (isBigCardOpen) return;
     setTouchStart(e.touches[0].clientY);
-  }, []);
+  }, [isBigCardOpen]);
 
   const handleTouchMove = useCallback(
     (e: TouchEvent) => {
+      if (isBigCardOpen) return;
       if (touchStart === null || papers.length === 0) return;
       e.preventDefault();
 
       const currentTouch = e.touches[0].clientY;
       const diff = touchStart - currentTouch;
-      const threshold = 50; // minimum swipe distance
+      const threshold = 50;
 
       if (Math.abs(diff) < threshold) return;
 
       if (diff > 0) {
-        // Swipe up - show next paper
         setCurrentIndex((prev) => Math.min(prev + 1, papers.length - 1));
       } else {
-        // Swipe down - show previous paper
         setCurrentIndex((prev) => Math.max(prev - 1, 0));
       }
 
       setTouchStart(null);
     },
-    [touchStart, papers.length]
+    [touchStart, papers.length, isBigCardOpen]
   );
 
   const handleTouchEnd = useCallback(() => {
