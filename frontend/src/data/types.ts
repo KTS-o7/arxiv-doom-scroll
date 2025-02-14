@@ -4,8 +4,8 @@ export interface ArxivQueryParams {
   id_list?: string;
   start?: number;
   max_results?: number;
-  sortBy?: "relevance" | "lastUpdatedDate" | "submittedDate";
-  sortOrder?: "ascending" | "descending";
+  sortBy?: string;
+  sortOrder?: string;
 }
 
 // Author type with optional affiliation
@@ -107,5 +107,21 @@ export interface Theme extends Colors {
     small: string;
     medium: string;
     large: string;
+  };
+}
+
+export interface ArxivServerResponse {
+  papers: {
+    id: string;
+    title: string;
+    summary: string;
+    authors: { name: string }[];
+    published: string;
+    links: { href: string; title?: string; type?: string }[];
+  }[];
+  metadata: {
+    total_results: number;
+    start_index: number;
+    items_per_page: number;
   };
 }

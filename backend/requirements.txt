@@ -1,0 +1,7 @@
+flask[async]==2.3.3
+flask-cors==3.0.10
+pydantic==1.8.2
+aiohttp==3.9.3
+cachetools==5.0.0
+requests==2.26.0
+hypercorn==0.15.0 
