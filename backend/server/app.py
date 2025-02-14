@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from .utils import arxiv_service, ArxivQueryParams
+from .utils import arxiv_service, ArxivQueryParams, ArxivError
 import asyncio
 
 app = Flask(__name__)
@@ -31,7 +31,13 @@ async def get_papers():
 
         print(f"Processing request with params: {params.dict()}")
 
-        papers, metadata = await arxiv_service.fetch_papers(params)
+        try:
+            papers, metadata = await arxiv_service.fetch_papers(params)
+        except ArxivError as ae:
+            return jsonify({'error': str(ae)}), 500
+        except Exception as e:
+            return jsonify({'error': f"Unexpected error: {str(e)}"}), 500
+
         print(f"Retrieved {len(papers)} papers")
         
         # Format the response to match frontend expectations

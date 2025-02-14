@@ -23,8 +23,10 @@ class ArxivResponse(BaseModel):
     entries: list[dict] = Field(..., description="The entries of the response")
 
 
-class ArxivError(BaseModel):
-    error: str = Field(..., description="The error message")
+class ArxivError(Exception):
+    def __init__(self, error: str):
+        self.error = error
+        super().__init__(self.error)
 
 
 class Author(BaseModel):
@@ -76,15 +78,23 @@ class AsyncHTTPClient:
 
 
 class ArxivService:
-    def __init__(self):
+    def __init__(self, proxy_url: Optional[str] = None):
         self.base_url = "http://export.arxiv.org/api/query"
+        self.proxy_url = proxy_url
         # Cache papers for 1 hour
         self.cache = TTLCache(maxsize=1000, ttl=3600)
         self.session = None
 
     async def get_session(self):
         if self.session is None:
-            self.session = aiohttp.ClientSession(trust_env=True)
+            
+            try:
+                self.session = aiohttp.ClientSession(
+                    trust_env=True,
+                    connector=aiohttp.TCPConnector()
+                )
+            except Exception as e:
+                raise ArxivError(error=f"Failed to create session: {str(e)}")
         return self.session
 
     async def close(self):
@@ -114,7 +124,7 @@ class ArxivService:
             'sortOrder': params.sortOrder
         }
 
-        async with session.get(self.base_url, params=query_params) as response:
+        async with session.get(self.base_url, params=query_params,proxy=self.proxy_url) as response:
             if response.status != 200:
                 raise ArxivError(error=f"ArXiv API returned status code {response.status}")
             
@@ -208,6 +218,6 @@ class ArxivService:
             return result
 
 # Create a global instance of the service
-arxiv_service = ArxivService()
+arxiv_service = ArxivService(proxy_url="http://proxy.server:3128")  # or just ArxivService() for no proxy
 
 

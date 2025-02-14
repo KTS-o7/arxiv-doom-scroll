@@ -1,9 +1,9 @@
 import { ArxivQueryParams, ArxivServerResponse, ArxivPaper } from "../data/types";
 
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = "https://infscrolltest.pythonanywhere.com/api/";
 
 /**
- * Fetches papers from the local server
+ * Fetches papers from the pythonanywhere server
  */
 export const fetchArxivData = async (
   params: ArxivQueryParams
