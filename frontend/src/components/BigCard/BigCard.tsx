@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   StyledBigCard,
   StyledOverlay,
@@ -9,6 +9,7 @@ import {
   ReadMoreLink,
   CloseButton,
 } from './BigCard.styles';
+import { useSetBigCardOpen } from '../../hooks/useIsBigCardOpen';
 
 interface BigCardProps {
   title: string;
@@ -27,6 +28,13 @@ const BigCard: React.FC<BigCardProps> = ({
   url,
   onClose,
 }) => {
+  const setBigCardOpen = useSetBigCardOpen();
+  
+  useEffect(() => {
+    setBigCardOpen(true);
+    return () => setBigCardOpen(false);
+  }, [setBigCardOpen]);
+
   return (
     <>
       <StyledOverlay onClick={onClose} />
