@@ -9,9 +9,6 @@ const ThemedApp = () => {
   const { mode } = useTheme();
   const theme = getTheme(mode);
 
-  console.log("mode", mode);
-  console.log("theme", theme);
-
   return (
     <MUIThemeProvider theme={theme}>
       <CssBaseline />
