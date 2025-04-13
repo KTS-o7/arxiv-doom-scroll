@@ -30,7 +30,7 @@ const Card: React.FC<CardProps> = ({
   // Function to get first 4 lines of summary
   const truncateSummary = (text: string) => {
     const lines = text.split("\n").slice(0, 6);
-    return lines.join("\n") + (text.split("\n").length > 4 ? "..." : "");
+    return lines.join("\n") + (text.split("\n").length > 6 ? "..." : "");
   };
 
   return (
