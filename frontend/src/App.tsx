@@ -1,31 +1,32 @@
-import React from 'react';
-import { ThemeProvider, createGlobalStyle } from "styled-components";
-import { theme } from './styles/theme';
+import { ThemeProvider as MUIThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import { useTheme, CustomThemeProvider } from "./contexts/ThemeContext";
+import { getTheme } from "./styles/theme";
 import Navbar from "./components/Navbar/Navbar";
 import CardGrid from "./components/CardGrid/CardGrid";
 
-const GlobalStyles = createGlobalStyle`
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+const ThemedApp = () => {
+  const { mode } = useTheme();
+  const theme = getTheme(mode);
 
-  body {
-    background-color: ${({ theme }) => theme.colors.background};
-    color: ${({ theme }) => theme.colors.text};
-    font-family: 'Inter', sans-serif;
-  }
-`;
+  console.log("mode", mode);
+  console.log("theme", theme);
 
-const App = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <GlobalStyles />
+    <MUIThemeProvider theme={theme}>
+      <CssBaseline />
       <Navbar />
-        <CardGrid />
-    </ThemeProvider>
+      <CardGrid />
+    </MUIThemeProvider>
   );
 };
+
+function App() {
+  return (
+    <CustomThemeProvider>
+      <ThemedApp />
+    </CustomThemeProvider>
+  );
+}
 
 export default App;
