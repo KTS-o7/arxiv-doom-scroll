@@ -1,38 +1,22 @@
-import styled from "styled-components";
+import { AppBar, Toolbar, styled as muiStyled } from "@mui/material";
 
-export const StyledNav = styled.nav`
-  background-color: ${({ theme }) => theme.colors.background};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  padding: ${({ theme }) => theme.spacing.medium};
-  position: sticky;
-  top: 0;
-  z-index: 100;
-`;
+const StyledAppBar = muiStyled(AppBar)(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  borderBottom: `1px solid ${theme.palette.divider}`,
+}));
 
-export const Title = styled.h1`
-  color: ${({ theme }) => theme.colors.primary};
-  font-size: 1.5rem;
-  text-align: center;
-`;
+const StyledToolbar = muiStyled(Toolbar)(({ theme }) => ({
+  justifyContent: "space-between",
+  padding: theme.spacing(1),
+  [`${theme.breakpoints.up("sm")}`]: {
+    padding: theme.spacing(2),
+  },
+  [`${theme.breakpoints.down("sm")}`]: {
+    minHeight: 56,
+  },
+  [`${theme.breakpoints.up("sm")}`]: {
+    minHeight: 64,
+  },
+}));
 
-export const Acknowledgement = styled.h3`
-  color: ${({ theme }) => theme.colors.textSecondary};
-  font-size: 0.85rem;
-  font-weight: 500;
-  text-align: center;
-  display: block;
-  margin-top: ${({ theme }) => theme.spacing.small};
-`;
-
-export const DoomName = styled.h3`
-  color: ${({ theme }) => theme.colors.primary};
-  font-size: 0.85rem;
-  font-weight: 500;
-  text-align: center;
-  display: block;
-  margin-top: ${({ theme }) => theme.spacing.small};
-`;
-
-export const ColorLink = styled.a`
-  color: ${({ theme }) => theme.colors.primary};
-`;
+export { StyledAppBar, StyledToolbar };

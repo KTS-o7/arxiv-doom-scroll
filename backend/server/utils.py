@@ -124,7 +124,12 @@ class ArxivService:
             'sortOrder': params.sortOrder
         }
 
-        async with session.get(self.base_url, params=query_params,proxy=self.proxy_url) as response:
+        # Only include proxy if it's configured
+        request_kwargs = {'params': query_params}
+        if self.proxy_url:
+            request_kwargs['proxy'] = self.proxy_url
+
+        async with session.get(self.base_url, **request_kwargs) as response:
             if response.status != 200:
                 raise ArxivError(error=f"ArXiv API returned status code {response.status}")
             
@@ -218,6 +223,6 @@ class ArxivService:
             return result
 
 # Create a global instance of the service
-arxiv_service = ArxivService(proxy_url="http://proxy.server:3128")  # or just ArxivService() for no proxy
-
+#arxiv_service = ArxivService(proxy_url="http://proxy.server:3128")  # or just ArxivService() for no proxy
+arxiv_service = ArxivService()
 
